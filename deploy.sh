@@ -21,6 +21,15 @@ deploy_cluster() {
         return 1
     fi
 
+	# find the task in the cluster that corresponds to the sample-webapp-service, and kill it so the below command doesn't stall
+	for i in $(aws ecs list-tasks --cluster power-cluster | $JQ ".taskArns[$i]");
+	do
+	    if [[ $(aws ecs describe-tasks --cluster power-cluster --tasks $i | $JQ ".tasks[0].group") == "service:sample-webapp-service" ]]; then
+	            # kill it
+	            aws ecs stop-task --cluster power-cluster --task $i
+	    fi
+	done
+	
     # wait for older revisions to disappear
     # not really necessary, but nice for demos
     for attempt in {1..30}; do
